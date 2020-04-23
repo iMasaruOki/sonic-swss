@@ -703,7 +703,7 @@ bool NatMgr::setFullConeDnatIptablesRule(const string &opCmd)
     /* In case of fullcone, the --to-destination is ignored by the stack, giving an aribitrary value so that 
      * iptables doesn't fail for PREROUTING/DNAT rule */
     const std::string cmds = std::string("")
-          + IPTABLES_CMD + " -t nat " + "-" + opCmd + " PREROUTING " + " -j DNAT --to-destination 1.1.1.1 --fullcone";
+          + IPTABLES_CMD + " -t nat " + "-" + opCmd + " PREROUTING " + " -j DNAT --to-destination 1.1.1.1 --fullcone ! -i eth0";
         
     ret = swss::exec(cmds, res);
 
