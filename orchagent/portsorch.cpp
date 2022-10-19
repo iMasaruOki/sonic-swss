@@ -7335,6 +7335,7 @@ void PortsOrch::updatePortOperStatus(Port &port, sai_port_oper_status_t status)
 
     if(port.m_type == Port::TUNNEL)
     {
+        updateDbPortOperStatus(port, status);
         return;
     }
 
