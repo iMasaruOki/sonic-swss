@@ -275,7 +275,7 @@ create_tunnel(
     sai_ip_address_t *dst_ip,
     sai_object_id_t underlay_rif,
     bool p2p,
-    sai_uint8_t encap_ttl=0)
+    sai_uint8_t encap_ttl=64)
 {
     sai_attribute_t attr;
     std::vector<sai_attribute_t> tunnel_attrs;
