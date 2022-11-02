@@ -19,7 +19,6 @@
 #define VNET_TUNNEL_SIZE 40960
 #define VNET_ROUTE_FULL_MASK_OFFSET_MAX 3000
 #define VNET_NEIGHBOR_MAX 0xffff
-#define VXLAN_ENCAP_TTL 128
 #define VNET_BITMAP_RIF_MTU 9100
 
 extern sai_object_id_t gVirtualRouterId;
