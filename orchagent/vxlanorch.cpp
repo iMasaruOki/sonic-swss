@@ -479,11 +479,14 @@ VxlanTunnel::VxlanTunnel(string name, IpAddress srcIp, IpAddress dstIp, tunnel_c
        tunnel_orch->addVTEP(this, srcIp);
        vtep_ptr = NULL;
    }
-   else if (src_creation_ == TNL_CREATION_SRC_EVPN) 
+   else
    {
-       vtep_ptr = tunnel_orch->getVTEP(srcIp);
+       if (src_creation_ == TNL_CREATION_SRC_EVPN)
+       {
+           vtep_ptr = tunnel_orch->getVTEP(srcIp);
+       }
+       tunnel_orch->addRemoveStateTableEntry(name,srcIp, dstIp, src, true);
    }
-   tunnel_orch->addRemoveStateTableEntry(name,srcIp, dstIp, src, true);
 }
 
 VxlanTunnel::~VxlanTunnel()
