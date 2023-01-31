@@ -91,6 +91,8 @@ private:
     SubscriberStateTable m_mclagRemoteFdbStateTable;
     AppRestartAssist  *m_AppRestartAssist;
     SubscriberStateTable m_cfgEvpnNvoTable;
+    ProducerStateTable m_appIntfTable;
+    Table m_stateIntfTable;
 
     struct m_local_fdb_info
     {
@@ -153,6 +155,7 @@ private:
     void imetDelRoute(struct in_addr vtep, std::string ifname, uint32_t vni);
     void onMsgNbr(int nlmsg_type, struct nl_object *obj);
     void onMsgLink(int nlmsg_type, struct nl_object *obj);
+    void onMsgAddr(int nlmsg_type, struct nl_object *obj);
 };
 
 }

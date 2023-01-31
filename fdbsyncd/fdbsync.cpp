@@ -1,14 +1,17 @@
 #include <string>
 #include <netinet/in.h>
 #include <netlink/route/link.h>
+#include <netlink/route/addr.h>
 #include <netlink/route/neighbour.h>
 #include <netlink/route/link/vxlan.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 
 #include "logger.h"
 #include "dbconnector.h"
 #include "producerstatetable.h"
 #include "ipaddress.h"
+#include "ipprefix.h"
 #include "netmsg.h"
 #include "macaddress.h"
 #include "exec.h"
@@ -26,7 +29,9 @@ FdbSync::FdbSync(RedisPipeline *pipelineAppDB, DBConnector *stateDb, DBConnector
     m_imetTable(pipelineAppDB, APP_VXLAN_REMOTE_VNI_TABLE_NAME),
     m_fdbStateTable(stateDb, STATE_FDB_TABLE_NAME),
     m_mclagRemoteFdbStateTable(stateDb, STATE_MCLAG_REMOTE_FDB_TABLE_NAME),
-    m_cfgEvpnNvoTable(config_db, CFG_VXLAN_EVPN_NVO_TABLE_NAME)
+    m_cfgEvpnNvoTable(config_db, CFG_VXLAN_EVPN_NVO_TABLE_NAME),
+    m_appIntfTable(pipelineAppDB, APP_INTF_TABLE_NAME),
+    m_stateIntfTable(stateDb, STATE_INTERFACE_TABLE_NAME)
 {
     m_AppRestartAssist = new AppRestartAssist(pipelineAppDB, "fdbsyncd", "swss", DEFAULT_FDBSYNC_WARMSTART_TIMER);
     if (m_AppRestartAssist)
@@ -865,21 +870,64 @@ void FdbSync::onMsgLink(int nlmsg_type, struct nl_object *obj)
     return;
 }
 
+void FdbSync::onMsgAddr(int nlmsg_type, struct nl_object *obj)
+{
+    char ifnamebuf[IF_NAMESIZE];
+    char addrbuf[256];
+    auto addrinfo = (struct rtnl_addr *)obj;
+    string alias(if_indextoname(rtnl_addr_get_ifindex(addrinfo), ifnamebuf));
+    IpPrefix ip_prefix(nl_addr2str(rtnl_addr_get_local(addrinfo), addrbuf, sizeof(addrbuf)));
+    string appKey = string(ifnamebuf) + ":" + addrbuf;
+
+    if (nlmsg_type == RTM_NEWADDR)
+    {
+    std::vector<FieldValueTuple> fvVector;
+        FieldValueTuple f("family", ip_prefix.isV4() ? IPV4_NAME : IPV6_NAME);
+        // Don't send ipv4 link local config to AppDB and Orchagent
+        if ((ip_prefix.isV4() == false) || (ip_prefix.getIp().getAddrScope() != IpAddress::AddrScope::LINK_SCOPE))
+        {
+            FieldValueTuple s("scope", "global");
+            fvVector.push_back(s);
+            fvVector.push_back(f);
+            m_appIntfTable.set(appKey, fvVector);
+            m_stateIntfTable.hset(string(ifnamebuf) + "|" + addrbuf, "state", "ok");
+        }
+    }
+    else
+    {
+        // Don't send ipv4 link local config to AppDB and Orchagent
+        if ((ip_prefix.isV4() == false) || (ip_prefix.getIp().getAddrScope() != IpAddress::AddrScope::LINK_SCOPE))
+        {
+            m_appIntfTable.del(appKey);
+            m_stateIntfTable.del(string(ifnamebuf) + "|" + addrbuf);
+        }
+    }
+}
+
 void FdbSync::onMsg(int nlmsg_type, struct nl_object *obj)
 {
     if ((nlmsg_type != RTM_NEWLINK) &&
+       (nlmsg_type != RTM_NEWADDR) && (nlmsg_type != RTM_DELADDR) &&
         (nlmsg_type != RTM_NEWNEIGH) && (nlmsg_type != RTM_DELNEIGH))
     {
         SWSS_LOG_DEBUG("netlink: unhandled event: %d", nlmsg_type);
         return;
     }
-    if (nlmsg_type == RTM_NEWLINK)
+    switch (nlmsg_type)
     {
+    case RTM_NEWLINK:
         onMsgLink(nlmsg_type, obj);
-    }
-    else
-    {
+       break;
+    case RTM_NEWNEIGH:
+    case RTM_DELNEIGH:
         onMsgNbr(nlmsg_type, obj);
+       break;
+    case RTM_NEWADDR:
+    case RTM_DELADDR:
+        onMsgAddr(nlmsg_type, obj);
+       break;
+    default:
+       break;
     }
 }
 
