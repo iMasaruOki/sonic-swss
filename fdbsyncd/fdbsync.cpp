@@ -879,6 +879,7 @@ void FdbSync::onMsgAddr(int nlmsg_type, struct nl_object *obj)
     IpPrefix ip_prefix(nl_addr2str(rtnl_addr_get_local(addrinfo), addrbuf, sizeof(addrbuf)));
     string appKey = string(ifnamebuf) + ":" + addrbuf;
 
+    SWSS_LOG_DEBUG("%s: appKey %s, nlmsg_type %d", __func__, appKey.c_str(), nlmsg_type);
     if (nlmsg_type == RTM_NEWADDR)
     {
     std::vector<FieldValueTuple> fvVector;
@@ -906,28 +907,22 @@ void FdbSync::onMsgAddr(int nlmsg_type, struct nl_object *obj)
 
 void FdbSync::onMsg(int nlmsg_type, struct nl_object *obj)
 {
-    if ((nlmsg_type != RTM_NEWLINK) &&
-       (nlmsg_type != RTM_NEWADDR) && (nlmsg_type != RTM_DELADDR) &&
-        (nlmsg_type != RTM_NEWNEIGH) && (nlmsg_type != RTM_DELNEIGH))
-    {
-        SWSS_LOG_DEBUG("netlink: unhandled event: %d", nlmsg_type);
-        return;
-    }
     switch (nlmsg_type)
     {
     case RTM_NEWLINK:
         onMsgLink(nlmsg_type, obj);
-       break;
+        break;
     case RTM_NEWNEIGH:
     case RTM_DELNEIGH:
         onMsgNbr(nlmsg_type, obj);
-       break;
+        break;
     case RTM_NEWADDR:
     case RTM_DELADDR:
         onMsgAddr(nlmsg_type, obj);
-       break;
+        break;
     default:
-       break;
+        SWSS_LOG_DEBUG("netlink: unhandled event: %d", nlmsg_type);
+        break;
     }
 }
 

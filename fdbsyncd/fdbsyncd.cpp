@@ -72,6 +72,8 @@ int main(int argc, char **argv)
             }
 
             netlink.registerGroup(RTNLGRP_LINK);
+            netlink.registerGroup(RTNLGRP_IPV4_IFADDR);
+            netlink.registerGroup(RTNLGRP_IPV6_IFADDR);
             netlink.registerGroup(RTNLGRP_NEIGH);
             SWSS_LOG_NOTICE("Listens to link and neigh messages...");
             netlink.dumpRequest(RTM_GETLINK);
