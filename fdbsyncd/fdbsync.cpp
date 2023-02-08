@@ -879,7 +879,7 @@ void FdbSync::onMsgAddr(int nlmsg_type, struct nl_object *obj)
     IpPrefix ip_prefix(nl_addr2str(rtnl_addr_get_local(addrinfo), addrbuf, sizeof(addrbuf)));
     string appKey = string(ifnamebuf) + ":" + addrbuf;
 
-    SWSS_LOG_DEBUG("%s: appKey %s, nlmsg_type %d", __func__, appKey.c_str(), nlmsg_type);
+    SWSS_LOG_NOTICE("%s: appKey %s, nlmsg_type %d", __func__, appKey.c_str(), nlmsg_type);
     if (nlmsg_type == RTM_NEWADDR)
     {
     std::vector<FieldValueTuple> fvVector;
@@ -907,6 +907,7 @@ void FdbSync::onMsgAddr(int nlmsg_type, struct nl_object *obj)
 
 void FdbSync::onMsg(int nlmsg_type, struct nl_object *obj)
 {
+    SWSS_LOG_NOTICE("%s: nlmsg_type %d", __func__, nlmsg_type);
     switch (nlmsg_type)
     {
     case RTM_NEWLINK:
