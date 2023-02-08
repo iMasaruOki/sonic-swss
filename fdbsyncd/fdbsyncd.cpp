@@ -26,6 +26,8 @@ int main(int argc, char **argv)
     NetDispatcher::getInstance().registerMessageHandler(RTM_NEWNEIGH, &sync);
     NetDispatcher::getInstance().registerMessageHandler(RTM_DELNEIGH, &sync);
     NetDispatcher::getInstance().registerMessageHandler(RTM_NEWLINK, &sync);
+    NetDispatcher::getInstance().registerMessageHandler(RTM_NEWADDR, &sync);
+    NetDispatcher::getInstance().registerMessageHandler(RTM_DELADDR, &sync);
 
     while (1)
     {
